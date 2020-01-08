@@ -14,7 +14,7 @@
 
 **Spring Web**模型 - 视图 - 控制器(MVC)框架是围绕`DispatcherServlet`设计的，它处理所有的HTTP请求和响应。 **Spring Web MVC DispatcherServlet**的请求处理工作流如下图所示：
 
-![image-20200107204858663](.\assets\image-20200107204858663.png)
+![image-20200107204858663](./assets/image-20200107204858663.png)
 
 以下是对应于到`DispatcherServlet`的传入HTTP请求的事件顺序：
 
@@ -31,7 +31,7 @@
 
 整个流程如图所示
 
-![image-20200107205554897](.\assets\image-20200107205554897.png)
+![image-20200107205554897](./assets/image-20200107205554897.png)
 
 必要的配置：
 
