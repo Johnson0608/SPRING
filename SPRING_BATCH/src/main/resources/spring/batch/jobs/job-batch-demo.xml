@@ -1,0 +1,75 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:batch="http://www.springframework.org/schema/batch" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/batch
+		http://www.springframework.org/schema/batch/spring-batch-3.0.xsd
+		http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans-4.3.xsd
+	">
+
+    <import resource="../config/context.xml"/>
+    <import resource="../config/database.xml"/>
+
+    <bean id="report" class="springbatch.model.Report" scope="prototype"/>
+
+    <!--1.batch:job – This tag defines the job that we want to create. Id property specifies the ID of the job. We can define multiple jobs in a single xml file.-->
+    <batch:job id="DemoJobXMLWriter">
+        <!--2.batch:step – This tag is used to define different steps of a spring batch job.-->
+        <batch:step id="step1">
+            <!--3.Two different types of processing style is offered by Spring Batch Framework, which are “TaskletStep Oriented” and “Chunk Oriented”.
+                        Chunk Oriented style is used in this example refers to reading the data one by one and creating ‘chunks’ that will be written out, within a transaction boundary.-->
+            <batch:tasklet>
+               <!--commit-interval: This property defines the size of the chunk which will be committed once processing is done.
+                        Basically it means that ItemReader will read the data one by one and ItemProcessor will also process it the same way but ItemWriter will write the data only when it equals the size of commit-interval.-->
+                <batch:chunk reader="csvFileItemReader" writer="xmlItemWriter"
+                             processor="itemProcessor" commit-interval="10">
+                </batch:chunk>
+            </batch:tasklet>
+        </batch:step>
+    </batch:job>
+
+    <!--4. We are using FlatFileItemReader to read CSV file, CustomItemProcessor to process the data and write to XML file using StaxEventItemWriter.-->
+
+    <!--4.1 reader: spring bean used for reading the data. We have used csvFileItemReader bean in this example that is instance of FlatFileItemReader.-->
+    <bean id="csvFileItemReader" class="org.springframework.batch.item.file.FlatFileItemReader">
+
+        <property name="resource" value="classpath:csv/input/report.csv"/>
+
+        <property name="lineMapper">
+            <bean class="org.springframework.batch.item.file.mapping.DefaultLineMapper">
+                <property name="lineTokenizer">
+                    <bean
+                            class="org.springframework.batch.item.file.transform.DelimitedLineTokenizer">
+                        <property name="names" value="id,firstname,lastname,dob"/>
+                    </bean>
+                </property>
+                <property name="fieldSetMapper">
+                    <bean class="springbatch.ReportFieldSetMapper"/>
+
+                    <!-- if no data type conversion, use BeanWrapperFieldSetMapper to map
+                        by name <bean class="org.springframework.batch.item.file.mapping.BeanWrapperFieldSetMapper">
+                        <property name="prototypeBeanName" value="report" /> </bean> -->
+                </property>
+            </bean>
+        </property>
+
+    </bean>
+
+    <!--4.2 processor: this is the class which is used for processing the data. We have used CustomItemProcessor in this example.-->
+    <bean id="itemProcessor" class="springbatch.CustomItemProcessor"/>
+
+    <!--4.3 writer: bean used to write data into xml file.-->
+    <bean id="xmlItemWriter" class="org.springframework.batch.item.xml.StaxEventItemWriter">
+        <property name="resource" value="file:xml/outputs/report.xml"/>
+        <property name="marshaller" ref="reportMarshaller"/>
+        <property name="rootTagName" value="report"/>
+    </bean>
+
+    <bean id="reportMarshaller" class="org.springframework.oxm.jaxb.Jaxb2Marshaller">
+        <property name="classesToBeBound">
+            <list>
+                <value>springbatch.model.Report</value>
+            </list>
+        </property>
+    </bean>
+
+</beans>
